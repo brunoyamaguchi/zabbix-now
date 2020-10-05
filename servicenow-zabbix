@@ -9,13 +9,13 @@ import zapi
 # URL SERVICENOW
 url = 'https://service-now.com/api/now/table/incident'
 
+user = 'servicenow_user'
+pwd = 'password'
+
 # ZABBIX PARAMETROS
-zabbixsrv = 'zabbix.infra.elo'
+zabbixsrv = 'zabbix.srv.br'
 
-user = 'zabbix_user'
-pwd = 'zabbix'
-
-# PARAMETROS SERVICENOW
+# PARAMETROS SERVICENOW Call
 
 headers = {"Content-Type":"application/xml","Accept":"application/xml"}
 
@@ -45,10 +45,8 @@ def handleSlideshow(slideshow):
 
 def handleSlideshowNumber(number):
     inc = (getText(number.childNodes))
-    zabbix = zapi.ZabbixAPI(url='http://'+zabbixsrv+'',user='ServiceNow',password='acesso')
+    zabbix = zapi.ZabbixAPI(url='http://'+zabbixsrv+'',user='user_zabbix',password='password')
     zabbix.login()
     zabbix.Event.acknowledge({'eventids':[eventid],'action':4,'message':"N° Incidente: {}".format(inc)})
 
 handleSlideshow(dom)
-
-
