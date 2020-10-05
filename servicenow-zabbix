@@ -1,0 +1,54 @@
+#!/usr/bin/python
+# coding: utf-8
+
+import sys
+import requests
+import xml.dom.minidom
+import zapi
+
+# URL SERVICENOW
+url = 'https://service-now.com/api/now/table/incident'
+
+# ZABBIX PARAMETROS
+zabbixsrv = 'zabbix.infra.elo'
+
+user = 'zabbix_user'
+pwd = 'zabbix'
+
+# PARAMETROS SERVICENOW
+
+headers = {"Content-Type":"application/xml","Accept":"application/xml"}
+
+response = requests.post(url, auth=(user, pwd), headers=headers ,data="<request><entry><assignment_group>90621a40db96c0108a2687b304961942</assignment_group><urgency>3</urgency><caller_id>d75f3a0ddba104102d0c9d40ba96193a</caller_id><u_requested_for>d75f3a0ddba104102d0c9d40ba96193a</u_requested_for><category>4ffbea48db5ec0108a2687b30496197d</category><u_item>e82c2688db5ec0108a2687b3049619c0</u_item><short_description> "+sys.argv[1]+" </short_description><description>"+sys.argv[2]+" </description></entry></request>")
+
+print(response.status_code);
+
+# CAPTURA DO EVENTO ID
+msg = sys.argv[2]
+event = msg.split('#')
+eventid = event[1]
+
+dom = xml.dom.minidom.parseString(response.content)
+
+def getText(nodelist):
+    rc = []
+    for node in nodelist:
+        if node.nodeType == node.TEXT_NODE:
+            rc.append(node.data)
+    return ''.join(rc)
+
+def handleSlideshow(slideshow):
+    try:
+        handleSlideshowNumber(slideshow.getElementsByTagName("number")[0])
+    except Exception as e:
+        pass
+
+def handleSlideshowNumber(number):
+    inc = (getText(number.childNodes))
+    zabbix = zapi.ZabbixAPI(url='http://'+zabbixsrv+'',user='ServiceNow',password='acesso')
+    zabbix.login()
+    zabbix.Event.acknowledge({'eventids':[eventid],'action':4,'message':"N° Incidente: {}".format(inc)})
+
+handleSlideshow(dom)
+
+
